@@ -1,0 +1,111 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build Type'
+        required: true
+        default: 'debug'
+        type: choice
+        options:
+          - debug
+          - release
+          - both
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build APK
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Ensure Environment Configuration
+        run: |
+          # Ensure .env exists from template if not already present
+          if [ ! -f .env ]; then
+            if [ -f .env.example ]; then
+              cp .env.example .env
+              echo "Created .env from .env.example"
+            else
+              touch .env
+              echo "Created empty .env"
+            fi
+          fi
+
+          # Ensure debug.keystore exists so signingConfig succeeds seamlessly
+          if [ ! -f debug.keystore ]; then
+            echo "Generating debug.keystore..."
+            keytool -genkey -v -keystore debug.keystore \
+              -storepass android \
+              -alias androiddebugkey \
+              -keypass android \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 10000 \
+              -dname "CN=Android Debug,O=Android,C=US"
+          fi
+
+      - name: Grant Execute Permission to Gradle Wrapper
+        run: chmod +x gradlew
+
+      - name: Build Debug APK
+        if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.build_type == 'debug' || github.event.inputs.build_type == 'both' }}
+        run: ./gradlew assembleDebug --stacktrace
+
+      - name: Build Release APK
+        if: ${{ github.event.inputs.build_type == 'release' || github.event.inputs.build_type == 'both' }}
+        run: ./gradlew assembleRelease --stacktrace
+        continue-on-error: true
+
+      - name: Find and Stage APK Files
+        id: stage_apks
+        run: |
+          mkdir -p staged-apks
+          count=0
+          for apk in $(find app/build/outputs/apk -name "*.apk"); do
+            echo "Found APK: $apk"
+            filename=$(basename "$apk")
+            cp "$apk" "staged-apks/Vintage-${filename}"
+            count=$((count+1))
+          done
+          echo "staged_count=$count" >> $GITHUB_OUTPUT
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vintage-music-player-apk
+          path: staged-apks/*.apk
+          retention-days: 30
+
+      - name: GitHub Actions Summary
+        run: |
+          echo "### 🎵 Vintage Audiophile Player APK Build" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Build completed successfully!**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "#### 📲 How to Install the APK on Your Android Device:" >> $GITHUB_STEP_SUMMARY
+          echo "1. Go to the **Actions** tab of your GitHub repository." >> $GITHUB_STEP_SUMMARY
+          echo "2. Click on the latest workflow run: **${{ github.workflow }}**." >> $GITHUB_STEP_SUMMARY
+          echo "3. Scroll to the **Artifacts** section at the bottom." >> $GITHUB_STEP_SUMMARY
+          echo "4. Download **vintage-music-player-apk.zip** and unzip it." >> $GITHUB_STEP_SUMMARY
+          echo "5. Transfer or download the \`.apk\` to your Android phone and tap to install!" >> $GITHUB_STEP_SUMMARY

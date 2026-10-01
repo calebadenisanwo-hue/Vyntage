@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Vinyl Platter Outer Ring -->
+    <path
+        android:fillColor="#151413"
+        android:pathData="M 50,54 m -30,0 a 30,30 0 1,0 60,0 a 30,30 0 1,0 -60,0" />
+    <!-- Vinyl Groove Rings -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#2C2825"
+        android:strokeWidth="1.2"
+        android:pathData="M 50,54 m -26,0 a 26,26 0 1,0 52,0 a 26,26 0 1,0 -52,0" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#38332E"
+        android:strokeWidth="1.0"
+        android:pathData="M 50,54 m -21,0 a 21,21 0 1,0 42,0 a 21,21 0 1,0 -42,0" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#2C2825"
+        android:strokeWidth="1.0"
+        android:pathData="M 50,54 m -16,0 a 16,16 0 1,0 32,0 a 16,16 0 1,0 -32,0" />
+    <!-- Center Vinyl Label (Vintage Amber/Gold) -->
+    <path
+        android:fillColor="#C69238"
+        android:pathData="M 50,54 m -10,0 a 10,10 0 1,0 20,0 a 10,10 0 1,0 -20,0" />
+    <!-- Center Label Ring -->
+    <path
+        android:fillColor="#8C6018"
+        android:pathData="M 50,54 m -5,0 a 5,5 0 1,0 10,0 a 5,5 0 1,0 -10,0" />
+    <!-- Center Spindle Hole -->
+    <path
+        android:fillColor="#12100E"
+        android:pathData="M 50,54 m -2,0 a 2,2 0 1,0 4,0 a 2,2 0 1,0 -4,0" />
+    <!-- Tonearm Pivot Base -->
+    <path
+        android:fillColor="#8E857B"
+        android:pathData="M 76,33 m -5,0 a 5,5 0 1,0 10,0 a 5,5 0 1,0 -10,0" />
+    <path
+        android:fillColor="#D8C7A5"
+        android:pathData="M 76,33 m -3,0 a 3,3 0 1,0 6,0 a 3,3 0 1,0 -6,0" />
+    <!-- Curved Tonearm Wand (Gold/Silver) -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#E6D3A3"
+        android:strokeWidth="2.2"
+        android:strokeLineCap="round"
+        android:pathData="M 76,33 L 73,42 Q 71,52 61,58 L 56,60" />
+    <!-- Cartridge / Headshell -->
+    <path
+        android:fillColor="#C69238"
+        android:pathData="M 56,58 L 52,60 L 53,63 L 57,61 Z" />
+    <!-- Stylus Needle Point -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M 52,60 L 50,62 L 51,62 Z" />
+</vector>

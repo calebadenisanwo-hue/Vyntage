@@ -1,0 +1,27 @@
+<resources>
+    <string name="app_name">Vintage</string>
+    <string name="title_now_playing">Now Playing</string>
+    <string name="title_library">Local Library</string>
+    <string name="title_equalizer">Hi-Fi Equalizer</string>
+    <string name="title_queue">Current Queue</string>
+    <string name="action_play">Play</string>
+    <string name="action_pause">Pause</string>
+    <string name="action_next">Next Track</string>
+    <string name="action_previous">Previous Track</string>
+    <string name="action_shuffle">Shuffle</string>
+    <string name="action_repeat">Repeat</string>
+    <string name="action_scan_library">Scan Local Storage</string>
+    <string name="action_import_files">Import Audio Files</string>
+    <string name="action_load_sample_tracks">Load Vintage Audiophile Sampler</string>
+    <string name="permission_storage_rationale">Phono requires access to local audio files to play your music library.</string>
+    <string name="label_vinyl_crackle">Vinyl Surface Noise</string>
+    <string name="label_needle_drop">Needle Drop Sound</string>
+    <string name="label_tactile_haptics">Tactile Haptics</string>
+    <string name="label_speed_33">33 ⅓ RPM</string>
+    <string name="label_speed_45">45 RPM</string>
+    <string name="label_speed_78">78 RPM</string>
+    <string name="format_flac">FLAC Lossless</string>
+    <string name="format_hi_res">Hi-Res Audio</string>
+    <string name="eq_bass_boost">Bass Boost</string>
+    <string name="eq_virtualizer">3D Soundstage</string>
+</resources>
