@@ -44,6 +44,11 @@ data class EqBandInfo(
     val maxDb: Float = 12f
 )
 
+enum class DeckTheme(val label: String) {
+    CAR_CASSETTE("Car Cassette"),
+    VINYL_TURNTABLE("Vinyl Platter")
+}
+
 data class PlayerState(
     val currentTrack: AudioTrack? = null,
     val isPlaying: Boolean = false,
@@ -71,7 +76,10 @@ data class PlayerState(
     val isVinylCrackleEnabled: Boolean = true,
     val vinylCrackleVolume: Float = 0.35f,
     val isTactileHapticsEnabled: Boolean = true,
-    val isNeedleSoundEnabled: Boolean = true
+    val isNeedleSoundEnabled: Boolean = true,
+    // Theme & Cassette Deck state
+    val deckTheme: DeckTheme = DeckTheme.CAR_CASSETTE,
+    val isTapeInserted: Boolean = true
 )
 
 /**
@@ -543,6 +551,28 @@ class AudioPlaybackEngine(
     fun toggleNeedleSound(enabled: Boolean) {
         tactileEngine.isNeedleSoundEnabled = enabled
         _playerState.value = _playerState.value.copy(isNeedleSoundEnabled = enabled)
+    }
+
+    fun setDeckTheme(theme: DeckTheme) {
+        tactileEngine.playMechanicalClick()
+        _playerState.value = _playerState.value.copy(deckTheme = theme)
+    }
+
+    fun toggleTapeEject() {
+        val currentlyInserted = _playerState.value.isTapeInserted
+        if (currentlyInserted) {
+            tactileEngine.playCassetteEjectSound()
+            _playerState.value = _playerState.value.copy(isTapeInserted = false)
+            if (_playerState.value.isPlaying) {
+                exoPlayer.pause()
+            }
+        } else {
+            tactileEngine.playCassetteInsertSound()
+            _playerState.value = _playerState.value.copy(isTapeInserted = true)
+            if (_playerState.value.currentTrack != null) {
+                exoPlayer.play()
+            }
+        }
     }
 
     private fun startProgressTracker() {

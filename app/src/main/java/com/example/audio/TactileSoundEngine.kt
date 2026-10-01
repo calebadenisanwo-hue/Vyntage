@@ -234,6 +234,107 @@ class TactileSoundEngine(private val context: Context) {
         }
     }
 
+    /**
+     * Plays car cassette deck tape insertion sound (slide friction + heavy mechanical locking clamp).
+     */
+    fun playCassetteInsertSound() {
+        triggerHapticImpulse(durationMs = 36, amplitude = 220)
+
+        scope.launch {
+            try {
+                val sampleRate = 22050
+                val durationSec = 0.38
+                val numSamples = (sampleRate * durationSec).toInt()
+                val pcm = ShortArray(numSamples)
+                val random = Random()
+
+                for (i in 0 until numSamples) {
+                    val t = i.toDouble() / sampleRate
+                    // 1. Sliding guide friction
+                    val slide = if (t < 0.18) (random.nextDouble() * 2.0 - 1.0) * 0.25 * (1.0 - (t / 0.18)) else 0.0
+                    // 2. Heavy spring latch clunk at t = 0.16s
+                    val tLatch = t - 0.16
+                    val latchClunk = if (tLatch > 0) {
+                        (sin(2.0 * PI * 75.0 * tLatch) * exp(-28.0 * tLatch) * 0.8) +
+                                (sin(2.0 * PI * 420.0 * tLatch) * exp(-70.0 * tLatch) * 0.4)
+                    } else 0.0
+                    // 3. Pinch roller head lock at t = 0.22s
+                    val tHead = t - 0.22
+                    val headLock = if (tHead > 0) {
+                        sin(2.0 * PI * 880.0 * tHead) * exp(-120.0 * tHead) * 0.5
+                    } else 0.0
+
+                    val mixed = slide + latchClunk + headLock
+                    pcm[i] = (mixed.coerceIn(-1.0, 1.0) * 32767.0).toInt().toShort()
+                }
+
+                playOneShotPcm(pcm, sampleRate)
+            } catch (e: Exception) {
+                Log.w(tag, "Cassette insert sound error", e)
+            }
+        }
+    }
+
+    /**
+     * Plays car cassette eject sound (solenoid trip + mechanical spring pop).
+     */
+    fun playCassetteEjectSound() {
+        triggerHapticImpulse(durationMs = 30, amplitude = 190)
+
+        scope.launch {
+            try {
+                val sampleRate = 22050
+                val durationSec = 0.30
+                val numSamples = (sampleRate * durationSec).toInt()
+                val pcm = ShortArray(numSamples)
+                val random = Random()
+
+                for (i in 0 until numSamples) {
+                    val t = i.toDouble() / sampleRate
+                    // Spring release pop
+                    val springPop = sin(2.0 * PI * 140.0 * t) * exp(-40.0 * t) * 0.7
+                    val metallicClick = sin(2.0 * PI * 1200.0 * t) * exp(-100.0 * t) * 0.5
+                    val doorFriction = if (t > 0.08) (random.nextDouble() * 2.0 - 1.0) * exp(-20.0 * (t - 0.08)) * 0.25 else 0.0
+
+                    val mixed = springPop + metallicClick + doorFriction
+                    pcm[i] = (mixed.coerceIn(-1.0, 1.0) * 32767.0).toInt().toShort()
+                }
+
+                playOneShotPcm(pcm, sampleRate)
+            } catch (e: Exception) {
+                Log.w(tag, "Cassette eject sound error", e)
+            }
+        }
+    }
+
+    /**
+     * Plays car cassette deck tactile mechanical button press (heavy mechanical key clunk).
+     */
+    fun playCassetteDeckButtonSound() {
+        triggerHapticImpulse(durationMs = 18, amplitude = 140)
+
+        scope.launch {
+            try {
+                val sampleRate = 22050
+                val durationSec = 0.08
+                val numSamples = (sampleRate * durationSec).toInt()
+                val pcm = ShortArray(numSamples)
+
+                for (i in 0 until numSamples) {
+                    val t = i.toDouble() / sampleRate
+                    val thud = sin(2.0 * PI * 110.0 * t) * exp(-60.0 * t) * 0.7
+                    val snap = sin(2.0 * PI * 2200.0 * t) * exp(-220.0 * t) * 0.5
+                    val mixed = thud + snap
+                    pcm[i] = (mixed.coerceIn(-1.0, 1.0) * 32767.0).toInt().toShort()
+                }
+
+                playOneShotPcm(pcm, sampleRate)
+            } catch (e: Exception) {
+                Log.w(tag, "Deck button sound error", e)
+            }
+        }
+    }
+
     private fun playOneShotPcm(pcm: ShortArray, sampleRate: Int) {
         val track = AudioTrack.Builder()
             .setAudioAttributes(

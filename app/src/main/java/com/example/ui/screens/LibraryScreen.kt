@@ -57,6 +57,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.AudioTrack
+import com.example.ui.components.CassetteShelfView
 import com.example.ui.theme.AmberTubeGlow
 import com.example.ui.theme.CourierPrimeFontFamily
 import com.example.ui.theme.CreamIvory
@@ -68,6 +69,11 @@ import com.example.ui.theme.SurfaceCardElevated
 import com.example.ui.theme.VintageBrass
 import com.example.ui.theme.VintageBrassLight
 import com.example.ui.theme.VinylBlack
+
+enum class LibraryViewMode(val label: String) {
+    TRACK_LIST("Track List"),
+    CASSETTE_SHELF("Tape Shelf")
+}
 
 enum class LibrarySortOrder(val label: String) {
     DEFAULT("Default"),
@@ -95,6 +101,7 @@ fun LibraryScreen(
 ) {
     var selectedFilterIndex by remember { mutableIntStateOf(0) } // 0: All, 1: Favorites
     var sortOrder by remember { mutableStateOf(LibrarySortOrder.DEFAULT) }
+    var viewMode by remember { mutableStateOf(LibraryViewMode.TRACK_LIST) }
 
     val rawTracks: List<AudioTrack> = if (selectedFilterIndex == 1) {
         if (searchQuery.isBlank()) favoriteTracks else {
@@ -311,29 +318,64 @@ fun LibraryScreen(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // Filter Pills: "All Tracks (X)" | "Favorites (Y)"
+        // Filter Pills and View Mode Switcher: "All Tracks" | "Favorites" & "List" | "📼 Tape Shelf"
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            listOf("All Tracks (${allTracks.size})", "Favorites (${favoriteTracks.size})").forEachIndexed { idx, title ->
-                val isSelected = selectedFilterIndex == idx
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(if (isSelected) VintageBrass else SurfaceCard)
-                        .clickable { selectedFilterIndex = idx }
-                        .padding(horizontal = 14.dp, vertical = 6.dp)
-                        .testTag("filter_tab_$idx"),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = title,
-                        fontFamily = CourierPrimeFontFamily,
-                        fontSize = 11.sp,
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                        color = if (isSelected) Color(0xFF14120C) else MutedIvory
-                    )
+            // Filters
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                listOf("All (${allTracks.size})", "Favorites (${favoriteTracks.size})").forEachIndexed { idx, title ->
+                    val isSelected = selectedFilterIndex == idx
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(if (isSelected) VintageBrass else SurfaceCard)
+                            .clickable { selectedFilterIndex = idx }
+                            .padding(horizontal = 10.dp, vertical = 5.dp)
+                            .testTag("filter_tab_$idx"),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = title,
+                            fontFamily = CourierPrimeFontFamily,
+                            fontSize = 10.sp,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                            color = if (isSelected) Color(0xFF14120C) else MutedIvory
+                        )
+                    }
+                }
+            }
+
+            // View Mode Switcher
+            Row(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(SurfaceCard)
+                    .border(1.dp, Color(0xFF2E2B25), RoundedCornerShape(6.dp))
+                    .padding(2.dp),
+                horizontalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                LibraryViewMode.values().forEach { mode ->
+                    val isCurrentMode = viewMode == mode
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(if (isCurrentMode) AmberTubeGlow else Color.Transparent)
+                            .clickable { viewMode = mode }
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                            .testTag("view_mode_${mode.name.lowercase()}"),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = if (mode == LibraryViewMode.TRACK_LIST) "☰ List" else "📼 Tape Shelf",
+                            fontFamily = CourierPrimeFontFamily,
+                            fontSize = 9.sp,
+                            fontWeight = if (isCurrentMode) FontWeight.Bold else FontWeight.Normal,
+                            color = if (isCurrentMode) Color(0xFF14120C) else CreamIvory
+                        )
+                    }
                 }
             }
         }
@@ -393,7 +435,7 @@ fun LibraryScreen(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // Track List (NO ALBUM ART - pristine typography focused strictly on audio)
+        // Main Display: Either Cassette Shelf Rack OR Pristine Track List
         if (displayTracks.isEmpty()) {
             Box(
                 modifier = Modifier
@@ -426,6 +468,15 @@ fun LibraryScreen(
                     )
                 }
             }
+        } else if (viewMode == LibraryViewMode.CASSETTE_SHELF) {
+            // Authentic Retro Cassette Tape Rack Shelf
+            CassetteShelfView(
+                tracks = displayTracks,
+                currentTrackId = currentTrackId,
+                isPlaying = isPlaying,
+                onSelectTape = { onTrackSelected(it, displayTracks) },
+                modifier = Modifier.fillMaxSize()
+            )
         } else {
             LazyColumn(
                 modifier = Modifier

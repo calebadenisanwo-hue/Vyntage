@@ -1,6 +1,6 @@
 {
   "name": "Vintage",
-  "description": "Minimalist vintage local music player with animated vinyl turntable, tactile vinyl crackle effects, high-fidelity FLAC audio, and customizable 5-band equalizer.",
+  "description": "Minimalist vintage local music player with retro car cassette deck, animated vinyl turntable, tactile cassette tape shelf, crackle effects, high-fidelity FLAC audio, and customizable 5-band equalizer.",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"

@@ -40,6 +40,7 @@ import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Radio
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material3.Icon
@@ -69,6 +70,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.audio.DeckTheme
 import com.example.audio.PlayerState
 import com.example.ui.AppTab
 import com.example.ui.MainViewModel
@@ -182,6 +184,7 @@ fun VintageApp(viewModel: MainViewModel = viewModel()) {
                 // Vintage Bottom Navigation Bar
                 VintageNavigationBar(
                     selectedTab = selectedTab,
+                    deckTheme = playerState.deckTheme,
                     onTabSelected = { viewModel.selectTab(it) }
                 )
             }
@@ -215,7 +218,11 @@ fun VintageApp(viewModel: MainViewModel = viewModel()) {
                         onSetCrackleVolume = { viewModel.setVinylCrackleVolume(it) },
                         onOpenQueue = { viewModel.selectTab(AppTab.LIBRARY) },
                         onOpenEqualizer = { viewModel.selectTab(AppTab.EQUALIZER) },
-                        onSelectQueueTrack = { viewModel.playTrack(it) }
+                        onSelectQueueTrack = { viewModel.playTrack(it) },
+                        onSetDeckTheme = { viewModel.setDeckTheme(it) },
+                        onToggleTapeEject = { viewModel.toggleTapeEject() },
+                        onSelectCassetteTape = { viewModel.playTrackFromCassette(it) },
+                        allTracks = allTracks
                     )
 
                     AppTab.LIBRARY -> LibraryScreen(
@@ -263,7 +270,9 @@ fun VintageApp(viewModel: MainViewModel = viewModel()) {
                         onToggleHaptics = { viewModel.toggleTactileHaptics(it) },
                         onToggleNeedleSound = { viewModel.toggleNeedleSound(it) },
                         onStartSleepTimer = { viewModel.startSleepTimer(it) },
-                        onCancelSleepTimer = { viewModel.cancelSleepTimer() }
+                        onCancelSleepTimer = { viewModel.cancelSleepTimer() },
+                        deckTheme = playerState.deckTheme,
+                        onSetDeckTheme = { viewModel.setDeckTheme(it) }
                     )
                 }
             }
@@ -371,6 +380,7 @@ private fun MiniPlayerBar(
 @Composable
 private fun VintageNavigationBar(
     selectedTab: AppTab,
+    deckTheme: DeckTheme,
     onTabSelected: (AppTab) -> Unit
 ) {
     NavigationBar(
@@ -380,8 +390,11 @@ private fun VintageNavigationBar(
             .fillMaxWidth()
             .testTag("bottom_nav_bar")
     ) {
+        val playerLabel = if (deckTheme == DeckTheme.CAR_CASSETTE) "Cassette" else "Turntable"
+        val playerIcon = if (deckTheme == DeckTheme.CAR_CASSETTE) Icons.Default.Radio else Icons.Default.Album
+
         val items = listOf(
-            Triple(AppTab.TURNTABLE, "Turntable", Icons.Default.Album),
+            Triple(AppTab.TURNTABLE, playerLabel, playerIcon),
             Triple(AppTab.LIBRARY, "Library", Icons.Default.LibraryMusic),
             Triple(AppTab.EQUALIZER, "Hi-Fi EQ", Icons.Default.GraphicEq),
             Triple(AppTab.SETTINGS, "Settings", Icons.Default.Settings)

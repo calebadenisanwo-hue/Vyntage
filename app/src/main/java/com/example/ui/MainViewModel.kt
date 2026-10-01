@@ -6,6 +6,7 @@ import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.audio.AudioPlaybackEngine
+import com.example.audio.DeckTheme
 import com.example.audio.PlayerState
 import com.example.audio.TactileSoundEngine
 import com.example.audio.TurntableSpeed
@@ -179,6 +180,31 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun toggleNeedleSound(enabled: Boolean) {
         tactileEngine.playMechanicalClick()
         playbackEngine.toggleNeedleSound(enabled)
+    }
+
+    fun setDeckTheme(theme: DeckTheme) {
+        tactileEngine.playMechanicalClick()
+        playbackEngine.setDeckTheme(theme)
+        showNotification("Player theme: ${theme.label}")
+    }
+
+    fun toggleTapeEject() {
+        playbackEngine.toggleTapeEject()
+        val isInserted = playbackEngine.playerState.value.isTapeInserted
+        showNotification(if (isInserted) "Tape Loaded into Car Deck" else "Tape Ejected from Car Deck")
+    }
+
+    fun playTrackFromCassette(track: AudioTrack, trackList: List<AudioTrack> = allTracks.value) {
+        tactileEngine.playCassetteInsertSound()
+        val index = trackList.indexOfFirst { it.id == track.id }.coerceAtLeast(0)
+        playbackEngine.setQueue(trackList, index, autoPlay = true)
+        if (!playbackEngine.playerState.value.isTapeInserted) {
+            playbackEngine.toggleTapeEject()
+        }
+        viewModelScope.launch {
+            repository.recordPlay(track.id)
+        }
+        showNotification("Inserted Tape: ${track.title}")
     }
 
     fun scanDeviceLibrary() {

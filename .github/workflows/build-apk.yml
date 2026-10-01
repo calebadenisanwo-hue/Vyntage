@@ -97,6 +97,29 @@ jobs:
           path: staged-apks/*.apk
           retention-days: 30
 
+      - name: Publish APK to GitHub Releases
+        if: github.event_name != 'pull_request'
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="v1.0"
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            TAG="${{ github.ref_name }}"
+          fi
+          echo "Publishing APK release to GitHub for tag $TAG..."
+          gh release create "$TAG" staged-apks/*.apk \
+            --title "Vintage $TAG - Android APK" \
+            --notes "### 🎵 Vintage Audiophile Player APK Release
+          
+          Download the .apk below and install it directly on your Android phone!
+          
+          - **App:** Vintage
+          - **Build Type:** Universal Android APK (Direct Install)
+          - **Themes:** 80s/90s Car Cassette Deck & Analog Vinyl Turntable
+          - **Features:** Interactive mechanical deck buttons, Cassette Shelf rack, 5-band EQ, FLAC lossless playback, tactile crackle & pitch fader." \
+            --latest || gh release upload "$TAG" staged-apks/*.apk --clobber || true
+
       - name: GitHub Actions Summary
         run: |
           echo "### 🎵 Vintage Audiophile Player APK Build" >> $GITHUB_STEP_SUMMARY

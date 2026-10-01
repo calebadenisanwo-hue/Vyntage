@@ -40,6 +40,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.audio.DeckTheme
 import com.example.ui.theme.AmberTubeGlow
 import com.example.ui.theme.CourierPrimeFontFamily
 import com.example.ui.theme.CreamIvory
@@ -65,6 +66,8 @@ fun SettingsScreen(
     onToggleNeedleSound: (Boolean) -> Unit,
     onStartSleepTimer: (Int) -> Unit,
     onCancelSleepTimer: () -> Unit,
+    deckTheme: DeckTheme = DeckTheme.CAR_CASSETTE,
+    onSetDeckTheme: (DeckTheme) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
@@ -93,6 +96,63 @@ fun SettingsScreen(
                 color = MutedIvory,
                 letterSpacing = 1.sp
             )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // 0. Visual Player Theme Selection (Car Cassette Deck vs Vinyl Turntable)
+        Text(
+            text = "DEFAULT PLAYER THEME",
+            fontFamily = CourierPrimeFontFamily,
+            fontSize = 10.sp,
+            color = VintageBrassLight,
+            letterSpacing = 1.2.sp
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            DeckTheme.values().forEach { theme ->
+                val isSelected = deckTheme == theme
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(if (isSelected) SurfaceCardElevated else SurfaceCard)
+                        .border(
+                            1.5.dp,
+                            if (isSelected) VintageBrass else Color(0xFF2E2B25),
+                            RoundedCornerShape(8.dp)
+                        )
+                        .clickable { onSetDeckTheme(theme) }
+                        .padding(12.dp)
+                        .testTag("settings_theme_${theme.name.lowercase()}"),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = if (theme == DeckTheme.CAR_CASSETTE) "📼" else "📀",
+                            fontSize = 24.sp
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = theme.label,
+                            fontFamily = PlayfairFontFamily,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (isSelected) VintageBrassLight else CreamIvory
+                        )
+                        Text(
+                            text = if (theme == DeckTheme.CAR_CASSETTE) "In-Dash Stereo" else "Platter & Arm",
+                            fontFamily = CourierPrimeFontFamily,
+                            fontSize = 9.sp,
+                            color = if (isSelected) AmberTubeGlow else DarkMuted
+                        )
+                    }
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))

@@ -63,10 +63,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.audio.DeckTheme
 import com.example.audio.PlayerState
 import com.example.audio.RepeatMode
 import com.example.audio.TurntableSpeed
 import com.example.data.model.AudioTrack
+import com.example.ui.components.CarCassetteDeck
+import com.example.ui.components.CassetteShelfView
 import com.example.ui.components.DualVuMeterView
 import com.example.ui.components.RotatingVinylRecord
 import com.example.ui.theme.AmberTubeGlow
@@ -100,6 +103,10 @@ fun NowPlayingScreen(
     onOpenQueue: () -> Unit,
     onOpenEqualizer: () -> Unit,
     onSelectQueueTrack: (AudioTrack) -> Unit = {},
+    onSetDeckTheme: (DeckTheme) -> Unit = {},
+    onToggleTapeEject: () -> Unit = {},
+    onSelectCassetteTape: (AudioTrack) -> Unit = {},
+    allTracks: List<AudioTrack> = emptyList(),
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
@@ -107,6 +114,7 @@ fun NowPlayingScreen(
     var scrubProgress by remember { mutableFloatStateOf(0f) }
     var showQueueSheet by remember { mutableStateOf(false) }
     var showSpecsDialog by remember { mutableStateOf(false) }
+    var showShelfSheet by remember { mutableStateOf(false) }
 
     val track = playerState.currentTrack
     val currentProgress = if (isScrubbing) scrubProgress else playerState.progress
@@ -140,7 +148,7 @@ fun NowPlayingScreen(
                     letterSpacing = 3.sp
                 )
                 Text(
-                    text = "ANALOG HI-FI MASTER",
+                    text = if (playerState.deckTheme == DeckTheme.CAR_CASSETTE) "CAR CASSETTE STEREO" else "ANALOG HI-FI MASTER",
                     fontFamily = CourierPrimeFontFamily,
                     fontSize = 8.sp,
                     color = MutedIvory,
@@ -227,23 +235,151 @@ fun NowPlayingScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
-        // 2. Animated Vinyl Turntable (Rotating vinyl record synced with playback state)
-        Box(
+        // Theme Switcher: Car Cassette vs Vinyl Turntable
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .aspectRatio(1.15f)
+                .clip(RoundedCornerShape(8.dp))
+                .background(SurfaceCard)
+                .border(1.dp, Color(0xFF2E2B25), RoundedCornerShape(8.dp))
+                .padding(3.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            RotatingVinylRecord(
-                isPlaying = playerState.isPlaying,
-                progress = playerState.progress,
-                speed = playerState.speed,
-                title = track?.title ?: "",
-                artist = track?.artist ?: "",
-                showTonearm = true,
-                modifier = Modifier.fillMaxSize()
-            )
+            DeckTheme.values().forEach { theme ->
+                val isSelected = playerState.deckTheme == theme
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(if (isSelected) VintageBrass else Color.Transparent)
+                        .clickable { onSetDeckTheme(theme) }
+                        .padding(vertical = 6.dp)
+                        .testTag("theme_tab_${theme.name.lowercase()}"),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = if (theme == DeckTheme.CAR_CASSETTE) "📼 " else "📀 ",
+                            fontSize = 11.sp
+                        )
+                        Text(
+                            text = theme.label.uppercase(),
+                            fontFamily = CourierPrimeFontFamily,
+                            fontSize = 10.sp,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                            color = if (isSelected) Color(0xFF14120C) else MutedIvory
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Center Audio Visual Unit: Car Cassette Deck OR Vinyl Turntable
+        if (playerState.deckTheme == DeckTheme.CAR_CASSETTE) {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                CarCassetteDeck(
+                    track = track,
+                    isPlaying = playerState.isPlaying,
+                    progress = playerState.progress,
+                    isTapeInserted = playerState.isTapeInserted,
+                    onPlay = onPlayPause,
+                    onPause = onPlayPause,
+                    onPrevious = onPrevious,
+                    onNext = onNext,
+                    onEjectToggle = {
+                        onToggleTapeEject()
+                        if (playerState.isTapeInserted) {
+                            showShelfSheet = true
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Cassette Deck Quick Action Buttons: Open Shelf & Queue
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(SurfaceCard)
+                            .border(1.dp, AmberTubeGlow.copy(alpha = 0.5f), RoundedCornerShape(6.dp))
+                            .clickable { showShelfSheet = true }
+                            .padding(vertical = 8.dp, horizontal = 10.dp)
+                            .testTag("open_tape_shelf_button"),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(text = "📼", fontSize = 12.sp)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "CASSETTE SHELF RACK",
+                                fontFamily = CourierPrimeFontFamily,
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = AmberTubeGlow
+                            )
+                        }
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(SurfaceCard)
+                            .border(1.dp, VintageBrass.copy(alpha = 0.4f), RoundedCornerShape(6.dp))
+                            .clickable { showQueueSheet = true }
+                            .padding(vertical = 8.dp, horizontal = 10.dp)
+                            .testTag("open_queue_quick_button"),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.QueueMusic,
+                                contentDescription = "Queue",
+                                tint = VintageBrass,
+                                modifier = Modifier.size(13.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "QUEUE (${playerState.queue.size} TRACKS)",
+                                fontFamily = CourierPrimeFontFamily,
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = CreamIvory
+                            )
+                        }
+                    }
+                }
+            }
+        } else {
+            // Animated Vinyl Turntable (Rotating vinyl record synced with playback state)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(1.15f)
+            ) {
+                RotatingVinylRecord(
+                    isPlaying = playerState.isPlaying,
+                    progress = playerState.progress,
+                    speed = playerState.speed,
+                    title = track?.title ?: "",
+                    artist = track?.artist ?: "",
+                    showTonearm = true,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(14.dp))
@@ -803,5 +939,82 @@ fun NowPlayingScreen(
                 }
             }
         )
+    }
+
+    // Modal Cassette Shelf Rack Sheet
+    if (showShelfSheet) {
+        val shelfSheetState = rememberModalBottomSheetState()
+        ModalBottomSheet(
+            onDismissRequest = { showShelfSheet = false },
+            sheetState = shelfSheetState,
+            containerColor = ChassisDark,
+            contentColor = CreamIvory
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "DASHBOARD CASSETTE RACK",
+                            fontFamily = PlayfairFontFamily,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = VintageBrass
+                        )
+                        Text(
+                            text = "TAP ANY CASSETTE TO INSERT INTO PLAYER",
+                            fontFamily = CourierPrimeFontFamily,
+                            fontSize = 9.sp,
+                            color = MutedIvory
+                        )
+                    }
+                    IconButton(onClick = { showShelfSheet = false }) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Close",
+                            tint = MutedIvory,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                val tapesList = if (allTracks.isNotEmpty()) allTracks else playerState.queue
+                if (tapesList.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "No cassette tapes found in library.",
+                            fontFamily = CourierPrimeFontFamily,
+                            fontSize = 12.sp,
+                            color = DarkMuted
+                        )
+                    }
+                } else {
+                    CassetteShelfView(
+                        tracks = tapesList,
+                        currentTrackId = playerState.currentTrack?.id,
+                        isPlaying = playerState.isPlaying,
+                        onSelectTape = { chosenTrack ->
+                            onSelectCassetteTape(chosenTrack)
+                            showShelfSheet = false
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+        }
     }
 }
